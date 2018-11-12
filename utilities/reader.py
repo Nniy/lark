@@ -25,19 +25,20 @@ def load_npz(filepath):
     tracks = pm.instruments
     for track in tracks:
         piano_roll = track.get_piano_roll(fs=tick / time)
-        padded_pr = np.pad(piano_roll, ((0, 0), (0, tick - len(piano_roll[0]))), 'constant').T
+        if tick < 640:
+            padded_pr = np.pad(piano_roll, ((0, 0), (0, 640 - len(piano_roll[0]))), 'constant').T
+        else:
+            padded_pr = np.pad(piano_roll, ((0, 0), (0, tick - len(piano_roll[0]))), 'constant').T
         multi_tracks.append(padded_pr[:640])
-    print(np.array(multi_tracks).shape)
 
     concat_pr = multi_tracks[0]
     for i in multi_tracks[1:]:
         concat_pr = np.concatenate((concat_pr, i), axis=1)
-
     return concat_pr
 
 
 hf = h5py.File('../data/data.h5', 'w')
-list_pr = get_filenames("../data")
+list_pr = get_filenames("../data/lpd_5_cleansed/")
 
 train = []
 for pr in list_pr:
