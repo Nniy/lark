@@ -56,3 +56,4 @@ fabric.properties
 /cnnGAN/training_checkpoints/
 /data/
 /.idea/
+/.DS_Store
