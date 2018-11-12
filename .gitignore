@@ -57,3 +57,4 @@ fabric.properties
 /data/
 /.idea/
 /.DS_Store
+/test.py

@@ -41,7 +41,7 @@ hf = h5py.File('../data/data.h5', 'w')
 list_pr = get_filenames("../data/lpd_5_cleansed/")
 
 train = []
-for pr in list_pr:
+for pr in list_pr[:1000]:
     train.append(load_npz(pr))
 hf.create_dataset('train', data=np.array(train))
 hf.close()

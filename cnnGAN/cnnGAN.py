@@ -5,6 +5,7 @@ import glob
 import matplotlib.pyplot as plt
 import PIL
 import imageio
+import h5py
 from IPython import display
 
 import tensorflow as tf
@@ -14,16 +15,22 @@ tf.enable_eager_execution()
 print("TensorFlow version: {}".format(tf.VERSION))
 print("Eager execution: {}".format(tf.executing_eagerly()))
 
-(train_images, train_labels), (_, _) = tf.keras.datasets.mnist.load_data()
+hf = h5py.File('../data/data.h5', 'r')
+train_pr = np.array(hf.get('train'))
+hf.close()
 
-train_images = train_images.reshape(train_images.shape[0], 28, 28, 1).astype('float32')
+train_pr = train_pr.reshape(train_pr.shape[0], 640, 640, 1).astype('float32')
+
+# (train_images, train_labels), (_, _) = tf.keras.datasets.mnist.load_data()
+
+# train_images = train_images.reshape(train_images.shape[0], 28, 28, 1).astype('float32')
 # We are normalizing the images to the range of [-1, 1]
-train_images = (train_images - 127.5) / 127.5
+# train_images = (train_images - 127.5) / 127.5
 
-BUFFER_SIZE = 60000
+BUFFER_SIZE = 1000
 BATCH_SIZE = 256
 
-train_dataset = tf.data.Dataset.from_tensor_slices(train_images).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
+train_dataset = tf.data.Dataset.from_tensor_slices(train_pr).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
 
 
 class Generator(tf.keras.Model):
