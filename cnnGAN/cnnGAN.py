@@ -15,11 +15,20 @@ tf.enable_eager_execution()
 print("TensorFlow version: {}".format(tf.VERSION))
 print("Eager execution: {}".format(tf.executing_eagerly()))
 
-hf = h5py.File('../data/data.h5', 'r')
-train_pr = np.array(hf.get('train'))
+hf = h5py.File('../data/gbs_data.h5', 'r')
+data0 = np.array(hf.get('data0'))
+# data1 = np.array(hf.get('data1'))
+# data2 = np.array(hf.get('data2'))
+# data3 = np.array(hf.get('data3'))
+# data4 = np.array(hf.get('data4'))
+# train_images = np.concatenate((data0, data1), axis=0)
+# train_images = np.concatenate((train_images, data2), axis=0)
+# train_images = np.concatenate((train_images, data3), axis=0)
+# train_images = np.concatenate((train_images, data4), axis=0)
+train_images = data0[1000:6000]
 hf.close()
 
-train_pr = train_pr.reshape(train_pr.shape[0], 640, 640, 1).astype('float32')
+train_images = train_images.reshape(train_images.shape[0], 384, 384, 1).astype('float32')
 
 # (train_images, train_labels), (_, _) = tf.keras.datasets.mnist.load_data()
 
@@ -27,10 +36,10 @@ train_pr = train_pr.reshape(train_pr.shape[0], 640, 640, 1).astype('float32')
 # We are normalizing the images to the range of [-1, 1]
 # train_images = (train_images - 127.5) / 127.5
 
-BUFFER_SIZE = 1000
-BATCH_SIZE = 256
+BUFFER_SIZE = 5000
+BATCH_SIZE = 128
 
-train_dataset = tf.data.Dataset.from_tensor_slices(train_pr).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
+train_dataset = tf.data.Dataset.from_tensor_slices(train_images).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
 
 
 class Generator(tf.keras.Model):
@@ -144,6 +153,7 @@ def generate_and_save_images(model, epoch, test_input):
 
     plt.savefig('image_at_epoch_{:04d}.png'.format(epoch))
     # plt.show()
+    plt.close()
 
 
 def train(dataset, epochs, noise_dim):

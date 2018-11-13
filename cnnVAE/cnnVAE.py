@@ -5,6 +5,7 @@ import glob
 import matplotlib.pyplot as plt
 import PIL
 import imageio
+import h5py
 from IPython import display
 
 import tensorflow.contrib.eager as tfe
@@ -15,28 +16,49 @@ tf.enable_eager_execution()
 print("TensorFlow version: {}".format(tf.VERSION))
 print("Eager execution: {}".format(tf.executing_eagerly()))
 
-(train_images, _), (test_images, _) = tf.keras.datasets.mnist.load_data()
+hf = h5py.File('../data/gbs_data.h5', 'r')
+data0 = np.array(hf.get('data0'))
+# data1 = np.array(hf.get('data1'))
+# data2 = np.array(hf.get('data2'))
+# data3 = np.array(hf.get('data3'))
+# data4 = np.array(hf.get('data4'))
+# train_images = np.concatenate((data0, data1), axis=0)
+# train_images = np.concatenate((train_images, data2), axis=0)
+# train_images = np.concatenate((train_images, data3), axis=0)
+# train_images = np.concatenate((train_images, data4), axis=0)
+train_images = data0[1000:6600]
+hf.close()
 
-train_images = train_images.reshape(train_images.shape[0], 28, 28, 1).astype('float32')
-test_images = test_images.reshape(test_images.shape[0], 28, 28, 1).astype('float32')
+print(train_images.shape)
+
+train_images = train_images.reshape(train_images.shape[0], 384, 384, 1).astype('float32')
+test_images = train_images[4800:]
+train_images = train_images[:4800]
+
+# (train_images, _), (test_images, _) = tf.keras.datasets.mnist.load_data()
+
+# train_images = train_images.reshape(train_images.shape[0], 28, 28, 1).astype('float32')
+# test_images = test_images.reshape(test_images.shape[0], 28, 28, 1).astype('float32')
 
 # Normalizing the images to the range of [0., 1.]
-train_images /= 255.
-test_images /= 255.
+# train_images /= 255.
+# test_images /= 255.
 
 # Binarization
-train_images[train_images >= .5] = 1.
-train_images[train_images < .5] = 0.
-test_images[test_images >= .5] = 1.
-test_images[test_images < .5] = 0.
+# train_images[train_images >= .5] = 1.
+# train_images[train_images < .5] = 0.
+# test_images[test_images >= .5] = 1.
+# test_images[test_images < .5] = 0.
 
-TRAIN_BUF = 60000
-BATCH_SIZE = 100
+TRAIN_BUF = 4800
+BATCH_SIZE = 32
 
-TEST_BUF = 10000
+TEST_BUF = 800
 
 train_dataset = tf.data.Dataset.from_tensor_slices(train_images).shuffle(TRAIN_BUF).batch(BATCH_SIZE)
 test_dataset = tf.data.Dataset.from_tensor_slices(test_images).shuffle(TEST_BUF).batch(BATCH_SIZE)
+
+IMAGE_DIM = 384
 
 
 class CVAE(tf.keras.Model):
@@ -45,7 +67,7 @@ class CVAE(tf.keras.Model):
         self.latent_dim = latent_dim
         self.inference_net = tf.keras.Sequential(
             [
-                tf.keras.layers.InputLayer(input_shape=(28, 28, 1)),
+                tf.keras.layers.InputLayer(input_shape=(IMAGE_DIM, IMAGE_DIM, 1)),
                 tf.keras.layers.Conv2D(
                     filters=32, kernel_size=3, strides=(2, 2), activation=tf.nn.relu),
                 tf.keras.layers.Conv2D(
@@ -59,8 +81,8 @@ class CVAE(tf.keras.Model):
         self.generative_net = tf.keras.Sequential(
             [
                 tf.keras.layers.InputLayer(input_shape=(latent_dim,)),
-                tf.keras.layers.Dense(units=7 * 7 * 32, activation=tf.nn.relu),
-                tf.keras.layers.Reshape(target_shape=(7, 7, 32)),
+                tf.keras.layers.Dense(units=96 * 96 * 32, activation=tf.nn.relu),
+                tf.keras.layers.Reshape(target_shape=(96, 96, 32)),
                 tf.keras.layers.Conv2DTranspose(
                     filters=64,
                     kernel_size=3,
@@ -75,7 +97,10 @@ class CVAE(tf.keras.Model):
                     activation=tf.nn.relu),
                 # No activation
                 tf.keras.layers.Conv2DTranspose(
-                    filters=1, kernel_size=3, strides=(1, 1), padding="SAME"),
+                    filters=1,
+                    kernel_size=3,
+                    strides=(1, 1),
+                    padding="SAME"),
             ]
         )
 
@@ -153,6 +178,7 @@ def generate_and_save_images(model, epoch, test_input):
     # tight_layout minimizes the overlap between 2 sub-plots
     plt.savefig('image_at_epoch_{:04d}.png'.format(epoch))
     # plt.show()
+    plt.close()
 
 
 generate_and_save_images(model, 0, random_vector_for_generation)
@@ -176,6 +202,11 @@ for epoch in range(1, epochs + 1):
                                                         end_time - start_time))
         generate_and_save_images(
             model, epoch, random_vector_for_generation)
+
+predictions = model.sample(random_vector_for_generation)
+hf = h5py.File('../data/gbs_data.h5', 'w')
+hf.create_dataset('predictions1', data=predictions)
+hf.close()
 
 
 def display_image(epoch_no):
