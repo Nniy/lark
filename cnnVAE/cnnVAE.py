@@ -16,8 +16,8 @@ tf.enable_eager_execution()
 print("TensorFlow version: {}".format(tf.VERSION))
 print("Eager execution: {}".format(tf.executing_eagerly()))
 
-hf = h5py.File('../data/gbs_data.h5', 'r')
-data0 = np.array(hf.get('data0'))
+hf = h5py.File('../data/data.h5', 'r')
+data0 = np.array(hf.get('train'))
 # data1 = np.array(hf.get('data1'))
 # data2 = np.array(hf.get('data2'))
 # data3 = np.array(hf.get('data3'))
@@ -55,6 +55,7 @@ BATCH_SIZE = 32
 
 TEST_BUF = 800
 
+print(train_images.shape)
 train_dataset = tf.data.Dataset.from_tensor_slices(train_images).shuffle(TRAIN_BUF).batch(BATCH_SIZE)
 test_dataset = tf.data.Dataset.from_tensor_slices(test_images).shuffle(TEST_BUF).batch(BATCH_SIZE)
 
