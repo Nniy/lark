@@ -249,6 +249,14 @@ class PositionalEncoding(nn.Module):
         return self.dropout(x)
 
 
+# plt.figure(figsize=(15, 5))
+# pe = PositionalEncoding(20, 0)
+# y = pe.forward(Variable(torch.zeros(1, 100, 20)))
+# plt.plot(np.arange(100), y[0, :, 4:8].data.numpy())
+# plt.legend(["dim %d"%p for p in [4,5,6,7]])
+# plt.show()
+
+
 def make_model(src_vocab, tgt_vocab, N=6,
                d_model=512, d_ff=2048, h=8, dropout=0.1):
     "Helper: Construct a model from hyperparameters."
@@ -366,6 +374,14 @@ def get_std_opt(model):
                    torch.optim.Adam(model.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9))
 
 
+# opts = [NoamOpt(512, 1, 4000, None),
+# #         NoamOpt(512, 1, 8000, None),
+# #         NoamOpt(256, 1, 4000, None)]
+# # plt.plot(np.arange(1, 20000), [[opt.rate(i) for opt in opts] for i in range(1, 20000)])
+# # plt.legend(["512:4000", "512:8000", "256:4000"])
+# # plt.show()
+
+
 class LabelSmoothing(nn.Module):
     "Implement label smoothing."
 
@@ -391,6 +407,18 @@ class LabelSmoothing(nn.Module):
         return self.criterion(x, Variable(true_dist, requires_grad=False))
 
 
+# # Example of label smoothing.
+# crit = LabelSmoothing(5, 0, 0.4)
+# predict = torch.FloatTensor([[0, 0.2, 0.7, 0.1, 0],
+#                              [0, 0.2, 0.7, 0.1, 0],
+#                              [0, 0.2, 0.7, 0.1, 0]])
+# v = crit(Variable(predict.log()),
+#          Variable(torch.LongTensor([2, 1, 0])))
+#
+# # Show the target distributions expected by the system.
+# plt.imshow(crit.true_dist)
+# plt.show()
+
 crit = LabelSmoothing(5, 0, 0.1)
 
 
@@ -400,7 +428,11 @@ def loss(x):
                                  ])
     # print(predict)
     return crit(Variable(predict.log()),
-                Variable(torch.LongTensor([1]))).data[0]
+                Variable(torch.LongTensor([1]))).item()  # was .data[0]
+
+
+# plt.plot(np.arange(1, 100), [loss(x) for x in range(1, 100)])
+# plt.show()
 
 
 # First example
@@ -431,7 +463,7 @@ class SimpleLossCompute:
         if self.opt is not None:
             self.opt.step()
             self.opt.optimizer.zero_grad()
-        return loss.data[0] * norm
+        return loss.item() * norm  # was .data[0]
 
 
 # Train the simple copy task.
@@ -460,7 +492,7 @@ def greedy_decode(model, src, src_mask, max_len, start_symbol):
                                     .type_as(src.data)))
         prob = model.generator(out[:, -1])
         _, next_word = torch.max(prob, dim=1)
-        next_word = next_word.data[0]
+        next_word = next_word.item()  # was .data[0]
         ys = torch.cat([ys,
                         torch.ones(1, 1).type_as(src.data).fill_(next_word)], dim=1)
     return ys
