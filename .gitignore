@@ -58,3 +58,7 @@ fabric.properties
 /test/
 /data/
 .gradle/
+test.py
+transformer/en-de-model.pt
+transformer/iwslt.pt
+transformer/.data/
