@@ -62,3 +62,4 @@ test.py
 transformer/en-de-model.pt
 transformer/iwslt.pt
 transformer/.data/
+transformer/The Annotated _Attention is All You Need_.ipynb
