@@ -31,7 +31,6 @@ class EncoderDecoder(nn.Module):
 
 
 def clones(module, N):
-
     return nn.ModuleList([copy.deepcopy(module) for _ in range(N)])
 
 
@@ -262,7 +261,7 @@ class LabelSmoothing(nn.Module):
 
     def __init__(self, size, padding_idx, smoothing=0.0):
         super(LabelSmoothing, self).__init__()
-        self.criterion = nn.KLDivLoss(size_average=False)
+        self.criterion = nn.KLDivLoss(reduction='sum')
         self.padding_idx = padding_idx
         self.confidence = 1.0 - smoothing
         self.smoothing = smoothing
@@ -293,7 +292,6 @@ def loss(x):
 
 
 def loss_backprop(generator, criterion, out, targets, normalize):
-
     assert out.size(1) == targets.size(1)
     total = 0.0
     out_grad = []
@@ -440,29 +438,21 @@ def rebatch(pad_idx, batch):
     return Batch(src, trg, src_mask, trg_mask, (trg[1:] != pad_idx).data.sum())
 
 
-train_iter = MyIterator(train, batch_size=BATCH_SIZE, device=0,
+train_iter = MyIterator(train, batch_size=BATCH_SIZE, device='cuda:0',
                         repeat=False, sort_key=lambda x: (len(x.src), len(x.trg)),
                         batch_size_fn=batch_size_fn, train=True)
-valid_iter = MyIterator(val, batch_size=BATCH_SIZE, device=0,
+valid_iter = MyIterator(val, batch_size=BATCH_SIZE, device='cuda:0',
                         repeat=False, sort_key=lambda x: (len(x.src), len(x.trg)),
                         batch_size_fn=batch_size_fn, train=False)
-
 pad_idx = TGT.vocab.stoi["<blank>"]
 model = make_model(len(SRC.vocab), len(TGT.vocab), N=6)
 model_opt = get_std_opt(model)
-model.cuda()
-
+# model.cuda()
 criterion = LabelSmoothing(size=len(TGT.vocab), padding_idx=pad_idx, smoothing=0.1)
-criterion.cuda()
+# criterion.cuda()
 for epoch in range(15):
     train_epoch((rebatch(pad_idx, b) for b in train_iter), model, criterion, model_opt)
     valid_epoch((rebatch(pad_idx, b) for b in valid_iter), model, criterion)
-
-
-
-
-
-
 
 # def get_std_opt(model):
 #     return NoamOpt(model.src_embed[0].d_model, 2, 4000,
