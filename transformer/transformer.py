@@ -14,8 +14,7 @@ seaborn.set_context(context='talk')
 
 class EncoderDecoder(nn.Module):
     """
-    A standard Encoder-Decoder architecture. Base for this and many
-    other models.
+    A standard Encoder-Decoder architecture. Base for this and many other models.
     """
 
     def __init__(self, encoder, decoder, src_embed, tgt_embed, generator):
@@ -27,9 +26,8 @@ class EncoderDecoder(nn.Module):
         self.generator = generator
 
     def forward(self, src, tgt, src_mask, tgt_mask):
-        "Take in and process masked src and target sequences."
-        return self.decode(self.encode(src, src_mask), src_mask,
-                           tgt, tgt_mask)
+        """Take in and process masked src and target sequences."""
+        return self.decode(self.encode(src, src_mask), src_mask, tgt, tgt_mask)
 
     def encode(self, src, src_mask):
         return self.encoder(self.src_embed(src), src_mask)
@@ -39,7 +37,7 @@ class EncoderDecoder(nn.Module):
 
 
 class Generator(nn.Module):
-    "Define standard linear + softmax generation step."
+    """Define standard linear + softmax generation step."""
 
     def __init__(self, d_model, vocab):
         super(Generator, self).__init__()
@@ -50,12 +48,12 @@ class Generator(nn.Module):
 
 
 def clones(module, N):
-    "Produce N identical layers."
+    """Produce N identical layers."""
     return nn.ModuleList([copy.deepcopy(module) for _ in range(N)])
 
 
 class Encoder(nn.Module):
-    "Core encoder is a stack of N layers"
+    """Core encoder is a stack of N layers"""
 
     def __init__(self, layer, N):
         super(Encoder, self).__init__()
@@ -63,14 +61,14 @@ class Encoder(nn.Module):
         self.norm = LayerNorm(layer.size)
 
     def forward(self, x, mask):
-        "Pass the input (and mask) through each layer in turn."
+        """Pass the input (and mask) through each layer in turn."""
         for layer in self.layers:
             x = layer(x, mask)
         return self.norm(x)
 
 
 class LayerNorm(nn.Module):
-    "Construct a layernorm module (See citation for details)."
+    """Construct a layernorm module (See citation for details)."""
 
     def __init__(self, features, eps=1e-6):
         super(LayerNorm, self).__init__()
@@ -96,12 +94,12 @@ class SublayerConnection(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x, sublayer):
-        "Apply residual connection to any sublayer with the same size."
+        """Apply residual connection to any sublayer with the same size."""
         return x + self.dropout(sublayer(self.norm(x)))
 
 
 class EncoderLayer(nn.Module):
-    "Encoder is made up of self-attn and feed forward (defined below)"
+    """Encoder is made up of self-attn and feed forward (defined below)"""
 
     def __init__(self, size, self_attn, feed_forward, dropout):
         super(EncoderLayer, self).__init__()
@@ -111,13 +109,13 @@ class EncoderLayer(nn.Module):
         self.size = size
 
     def forward(self, x, mask):
-        "Follow Figure 1 (left) for connections."
+        """Follow Figure 1 (left) for connections."""
         x = self.sublayer[0](x, lambda x: self.self_attn(x, x, x, mask))
         return self.sublayer[1](x, self.feed_forward)
 
 
 class Decoder(nn.Module):
-    "Generic N layer decoder with masking."
+    """Generic N layer decoder with masking."""
 
     def __init__(self, layer, N):
         super(Decoder, self).__init__()
@@ -131,7 +129,7 @@ class Decoder(nn.Module):
 
 
 class DecoderLayer(nn.Module):
-    "Decoder is made of self-attn, src-attn, and feed forward (defined below)"
+    """Decoder is made of self-attn, src-attn, and feed forward (defined below)"""
 
     def __init__(self, size, self_attn, src_attn, feed_forward, dropout):
         super(DecoderLayer, self).__init__()
@@ -150,17 +148,16 @@ class DecoderLayer(nn.Module):
 
 
 def subsequent_mask(size):
-    "Mask out subsequent positions."
+    """Mask out subsequent positions."""
     attn_shape = (1, size, size)
     subsequent_mask = np.triu(np.ones(attn_shape), k=1).astype('uint8')
     return torch.from_numpy(subsequent_mask) == 0
 
 
 def attention(query, key, value, mask=None, dropout=None):
-    "Compute 'Scaled Dot Product Attention'"
+    """Compute 'Scaled Dot Product Attention'"""
     d_k = query.size(-1)
-    scores = torch.matmul(query, key.transpose(-2, -1)) \
-             / math.sqrt(d_k)
+    scores = torch.matmul(query, key.transpose(-2, -1)) / math.sqrt(d_k)
     if mask is not None:
         scores = scores.masked_fill(mask == 0, -1e9)
     p_attn = F.softmax(scores, dim=-1)
@@ -171,7 +168,7 @@ def attention(query, key, value, mask=None, dropout=None):
 
 class MultiHeadedAttention(nn.Module):
     def __init__(self, h, d_model, dropout=0.1):
-        "Take in model size and number of heads."
+        """Take in model size and number of heads."""
         super(MultiHeadedAttention, self).__init__()
         assert d_model % h == 0
         # We assume d_v always equals d_k
@@ -204,7 +201,7 @@ class MultiHeadedAttention(nn.Module):
 
 
 class PositionwiseFeedForward(nn.Module):
-    "Implements FFN equation."
+    """Implements FFN equation."""
 
     def __init__(self, d_model, d_ff, dropout=0.1):
         super(PositionwiseFeedForward, self).__init__()
@@ -227,7 +224,7 @@ class Embeddings(nn.Module):
 
 
 class PositionalEncoding(nn.Module):
-    "Implement the PE function."
+    """Implement the PE function."""
 
     def __init__(self, d_model, dropout, max_len=5000):
         super(PositionalEncoding, self).__init__()
@@ -236,16 +233,14 @@ class PositionalEncoding(nn.Module):
         # Compute the positional encodings once in log space.
         pe = torch.zeros(max_len, d_model)
         position = torch.arange(0., max_len).unsqueeze(1)
-        div_term = torch.exp(torch.arange(0., d_model, 2) *
-                             -(math.log(10000.0) / d_model))
+        div_term = torch.exp(torch.arange(0., d_model, 2) * -(math.log(10000.0) / d_model))
         pe[:, 0::2] = torch.sin(position * div_term)
         pe[:, 1::2] = torch.cos(position * div_term)
         pe = pe.unsqueeze(0)
         self.register_buffer('pe', pe)
 
     def forward(self, x):
-        x = x + Variable(self.pe[:, :x.size(1)],
-                         requires_grad=False)
+        x = x + Variable(self.pe[:, :x.size(1)], requires_grad=False)
         return self.dropout(x)
 
 
@@ -257,17 +252,15 @@ class PositionalEncoding(nn.Module):
 # plt.show()
 
 
-def make_model(src_vocab, tgt_vocab, N=6,
-               d_model=512, d_ff=2048, h=8, dropout=0.1):
-    "Helper: Construct a model from hyperparameters."
+def make_model(src_vocab, tgt_vocab, N=6, d_model=512, d_ff=2048, h=8, dropout=0.1):
+    """Helper: Construct a model from hyperparameters."""
     c = copy.deepcopy
     attn = MultiHeadedAttention(h, d_model)
     ff = PositionwiseFeedForward(d_model, d_ff, dropout)
     position = PositionalEncoding(d_model, dropout)
     model = EncoderDecoder(
         Encoder(EncoderLayer(d_model, c(attn), c(ff), dropout), N),
-        Decoder(DecoderLayer(d_model, c(attn), c(attn),
-                             c(ff), dropout), N),
+        Decoder(DecoderLayer(d_model, c(attn), c(attn), c(ff), dropout), N),
         nn.Sequential(Embeddings(d_model, src_vocab), c(position)),
         nn.Sequential(Embeddings(d_model, tgt_vocab), c(position)),
         Generator(d_model, tgt_vocab))
@@ -281,7 +274,7 @@ def make_model(src_vocab, tgt_vocab, N=6,
 
 
 class Batch:
-    "Object for holding a batch of data with mask during training."
+    """Object for holding a batch of data with mask during training."""
 
     def __init__(self, src, trg=None, pad=0):
         self.src = src
@@ -289,36 +282,32 @@ class Batch:
         if trg is not None:
             self.trg = trg[:, :-1]
             self.trg_y = trg[:, 1:]
-            self.trg_mask = \
-                self.make_std_mask(self.trg, pad)
+            self.trg_mask = self.make_std_mask(self.trg, pad)
             self.ntokens = (self.trg_y != pad).data.sum()
 
     @staticmethod
     def make_std_mask(tgt, pad):
-        "Create a mask to hide padding and future words."
+        """Create a mask to hide padding and future words."""
         tgt_mask = (tgt != pad).unsqueeze(-2)
-        tgt_mask = tgt_mask & Variable(
-            subsequent_mask(tgt.size(-1)).type_as(tgt_mask.data))
+        tgt_mask = tgt_mask & Variable(subsequent_mask(tgt.size(-1)).type_as(tgt_mask.data))
         return tgt_mask
 
 
 def run_epoch(data_iter, model, loss_compute):
-    "Standard Training and Logging Function"
+    """Standard Training and Logging Function"""
     start = time.time()
     total_tokens = 0
     total_loss = 0
     tokens = 0
     for i, batch in enumerate(data_iter):
-        out = model.forward(batch.src, batch.trg,
-                            batch.src_mask, batch.trg_mask)
+        out = model.forward(batch.src, batch.trg, batch.src_mask, batch.trg_mask)
         loss = loss_compute(out, batch.trg_y, batch.ntokens)
         total_loss += loss
         total_tokens += batch.ntokens
         tokens += batch.ntokens
         if i % 50 == 1:
             elapsed = time.time() - start
-            print("Epoch Step: %d Loss: %f Tokens per Sec: %f" %
-                  (i, loss / batch.ntokens, tokens / elapsed))
+            print("Epoch Step: %d Loss: %f Tokens per Sec: %f" % (i, loss / batch.ntokens, tokens / elapsed))
             start = time.time()
             tokens = 0
     return total_loss / total_tokens
@@ -328,7 +317,7 @@ global max_src_in_batch, max_tgt_in_batch
 
 
 def batch_size_fn(new, count, sofar):
-    "Keep augmenting batch and calculate total number of tokens + padding."
+    """Keep augmenting batch and calculate total number of tokens + padding."""
     global max_src_in_batch, max_tgt_in_batch
     if count == 1:
         max_src_in_batch = 0
@@ -341,7 +330,7 @@ def batch_size_fn(new, count, sofar):
 
 
 class NoamOpt:
-    "Optim wrapper that implements rate."
+    """Optim wrapper that implements rate."""
 
     def __init__(self, model_size, factor, warmup, optimizer):
         self.optimizer = optimizer
@@ -352,7 +341,7 @@ class NoamOpt:
         self._rate = 0
 
     def step(self):
-        "Update parameters and rate"
+        """Update parameters and rate"""
         self._step += 1
         rate = self.rate()
         for p in self.optimizer.param_groups:
@@ -361,12 +350,10 @@ class NoamOpt:
         self.optimizer.step()
 
     def rate(self, step=None):
-        "Implement `lrate` above"
+        """Implement `lrate` above"""
         if step is None:
             step = self._step
-        return self.factor * \
-               (self.model_size ** (-0.5) *
-                min(step ** (-0.5), step * self.warmup ** (-1.5)))
+        return self.factor * (self.model_size ** (-0.5) * min(step ** (-0.5), step * self.warmup ** (-1.5)))
 
 
 def get_std_opt(model):
@@ -383,7 +370,7 @@ def get_std_opt(model):
 
 
 class LabelSmoothing(nn.Module):
-    "Implement label smoothing."
+    """Implement label smoothing."""
 
     def __init__(self, size, padding_idx, smoothing=0.0):
         super(LabelSmoothing, self).__init__()
@@ -424,11 +411,9 @@ crit = LabelSmoothing(5, 0, 0.1)
 
 def loss(x):
     d = x + 3 * 1
-    predict = torch.FloatTensor([[0, x / d, 1 / d, 1 / d, 1 / d],
-                                 ])
+    predict = torch.FloatTensor([[0, x / d, 1 / d, 1 / d, 1 / d], ])
     # print(predict)
-    return crit(Variable(predict.log()),
-                Variable(torch.LongTensor([1]))).item()  # was .data[0]
+    return crit(Variable(predict.log()), Variable(torch.LongTensor([1]))).item()  # was .data[0]
 
 
 # plt.plot(np.arange(1, 100), [loss(x) for x in range(1, 100)])
@@ -525,14 +510,12 @@ if True:
     EOS_WORD = '</s>'
     BLANK_WORD = "<blank>"
     SRC = data.Field(tokenize=tokenize_de, pad_token=BLANK_WORD)
-    TGT = data.Field(tokenize=tokenize_en, init_token=BOS_WORD,
-                     eos_token=EOS_WORD, pad_token=BLANK_WORD)
+    TGT = data.Field(tokenize=tokenize_en, init_token=BOS_WORD, eos_token=EOS_WORD, pad_token=BLANK_WORD)
 
     MAX_LEN = 100
     train, val, test = datasets.IWSLT.splits(
         exts=('.de', '.en'), fields=(SRC, TGT),
-        filter_pred=lambda x: len(vars(x)['src']) <= MAX_LEN and
-                              len(vars(x)['trg']) <= MAX_LEN)
+        filter_pred=lambda x: len(vars(x)['src']) <= MAX_LEN and len(vars(x)['trg']) <= MAX_LEN)
     MIN_FREQ = 2
     SRC.build_vocab(train.src, min_freq=MIN_FREQ)
     TGT.build_vocab(train.trg, min_freq=MIN_FREQ)
@@ -543,9 +526,7 @@ class MyIterator(data.Iterator):
         if self.train:
             def pool(d, random_shuffler):
                 for p in data.batch(d, self.batch_size * 100):
-                    p_batch = data.batch(
-                        sorted(p, key=self.sort_key),
-                        self.batch_size, self.batch_size_fn)
+                    p_batch = data.batch(sorted(p, key=self.sort_key), self.batch_size, self.batch_size_fn)
                     for b in random_shuffler(list(p_batch)):
                         yield b
 
@@ -553,20 +534,19 @@ class MyIterator(data.Iterator):
 
         else:
             self.batches = []
-            for b in data.batch(self.data(), self.batch_size,
-                                self.batch_size_fn):
+            for b in data.batch(self.data(), self.batch_size, self.batch_size_fn):
                 self.batches.append(sorted(b, key=self.sort_key))
 
 
 def rebatch(pad_idx, batch):
-    "Fix order in torchtext to match ours"
+    """Fix order in torchtext to match ours"""
     src, trg = batch.src.transpose(0, 1), batch.trg.transpose(0, 1)
     return Batch(src, trg, pad_idx)
 
 
 # Skip if not interested in multigpu.
 class MultiGPULossCompute:
-    "A multi-gpu loss compute and train function."
+    """A multi-gpu loss compute and train function."""
 
     def __init__(self, generator, criterion, devices, opt=None, chunk_size=5):
         # Send out to different gpus.

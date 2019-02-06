@@ -37,8 +37,6 @@ def save_midi(piano_roll, filename):
                     start_time = t
                     end_time = start_time + key_hold
 
-
-
                     while t + key_hold < track.shape[0]:
                         print(t + key_hold)
                         if track[t + key_hold][key] == 1:
