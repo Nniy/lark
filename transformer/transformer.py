@@ -1,4 +1,3 @@
-# Standard PyTorch imports
 import numpy as np
 import torch
 import torch.nn as nn
@@ -8,9 +7,6 @@ import copy
 import spacy
 from torch.autograd import Variable
 from torchtext import data, datasets
-
-# For plots
-import matplotlib.pyplot as plt
 
 
 class EncoderDecoder(nn.Module):
@@ -24,7 +20,6 @@ class EncoderDecoder(nn.Module):
         self.generator = generator
 
     def forward(self, src, tgt, src_mask, tgt_mask):
-        "Take in and process masked src and target sequences."
         memory = self.encoder(self.src_embed(src), src_mask)
         output = self.decoder(self.tgt_embed(tgt), memory, src_mask, tgt_mask)
         return output
